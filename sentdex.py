@@ -33,11 +33,10 @@ def create_text(text):
     
 
 def crash():
-    textSurface, textRect = create_text('You are crashed')
+    textSurface, textRect = create_text('You crashed')
     gameDisplay.blit(textSurface, textRect)
     pygame.display.update()
     time.sleep(2)
-    game()
 
 def showScore(score):
     font = pygame.font.SysFont(None, 50)
@@ -45,7 +44,7 @@ def showScore(score):
     gameDisplay.blit(surface, (0, 0))
 
 
-def game():
+while True:
     # Car
     x = display_width * 0.45
     y = display_height * 0.8
@@ -82,8 +81,10 @@ def game():
                 x_vel = 0
 
         x += x_vel
-        # Paint the entire screen white
+
+        # Clear the screen / The background
         gameDisplay.fill(white)
+
         gameDisplay.blit(carImg, (x, y))
         rect = (rectX, rectYN, rectW, rectH)
         pygame.draw.rect(gameDisplay, rectColor, rect)
@@ -103,6 +104,7 @@ def game():
         # Bundries logic
         if x < 0 or x > display_width - car_width:
             crash()
+            break
 
         # Car and Object collision
         objectBottom = rectYN + rectH
@@ -110,11 +112,9 @@ def game():
             # I don't understand what I wrote but it works XD
             if rectX < (x + car_width) and (rectX + rectW) > x:
                 crash()
+                break
 
         pygame.display.update()
         clock.tick(60)
 
-# TODO recursion problem
 # TODO multiple blocks
-# TODO color generator rgb 217 217 217
-game()
