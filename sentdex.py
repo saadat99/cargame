@@ -1,7 +1,8 @@
 import random
-import pygame
-import time
 import sys
+import time
+
+import pygame
 
 pygame.init()
 
@@ -43,6 +44,20 @@ def showScore(score):
     surface = font.render("score: " + str(score), True, black)
     gameDisplay.blit(surface, (0, 0))
 
+class Object:
+    def __init__(self, x, y, fallSpeed, width, height, color):
+        self.x = x
+        self.y = y
+        self.fallSpeed = fallSpeed
+        self.width = width
+        self.height = height
+        self.color = color
+    
+    def draw(self):
+        self.y += self.fallSpeed
+        rect = (self.x, self.y, self.width, self.height)
+        pygame.draw.rect(gameDisplay, self.color, rect)
+
 
 while True:
     # Car
@@ -53,19 +68,18 @@ while True:
     (car_width,car_height) = carImg.get_rect().size
 
     # Object
-    rectX = random.randrange(0, display_width)
-    rectY = -300
-    rectYN = rectY
-    rectYSpeed = 7
-    rectW = 100
-    rectH = 100
-    rectColor = generateRGB()
-
+    initYPos = -300
+    rect1 = Object(
+        random.randrange(0, display_width),
+        initYPos,
+        7,
+        100,
+        100,
+        generateRGB()
+    )
     score = 0
 
-    gameExit = False
-    # WHILE LOOP
-    while not gameExit:
+    while True:
         for event in pygame.event.get(): # Event handler
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -86,20 +100,18 @@ while True:
         gameDisplay.fill(white)
 
         gameDisplay.blit(carImg, (x, y))
-        rect = (rectX, rectYN, rectW, rectH)
-        pygame.draw.rect(gameDisplay, rectColor, rect)
-        rectYN += rectYSpeed
+        rect1.draw()
         showScore(score)
         # Object out of screen Logic
-        if rectYN > display_height:
-            rectYN = rectY
-            rectX = random.randrange(0, display_width)
+        if rect1.y > display_height:
+            rect1.y = initYPos
+            rect1.x = random.randrange(0, display_width)
             # Score logic and challenge
             score += 1
-            rectYSpeed += 1
+            rect1.fallSpeed += 1
             horizontal_speed += 1
-            rectW += 1
-            rectColor = generateRGB()
+            rect1.width += 5
+            rect1.color = generateRGB()
 
         # Bundries logic
         if x < 0 or x > display_width - car_width:
@@ -107,10 +119,10 @@ while True:
             break
 
         # Car and Object collision
-        objectBottom = rectYN + rectH
+        objectBottom = rect1.y + rect1.height
         if objectBottom > y:
             # I don't understand what I wrote but it works XD
-            if rectX < (x + car_width) and (rectX + rectW) > x:
+            if rect1.x < (x + car_width) and (rect1.x + rect1.width) > x:
                 crash()
                 break
 
