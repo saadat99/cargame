@@ -12,11 +12,13 @@ red = (255, 0, 0) # Based on RGB
 
 display_width = 800
 display_height = 600
-gameDisplay = pygame.display.set_mode((display_width, display_height))
+screen = pygame.display.set_mode((display_width, display_height))
 pygame.display.set_caption('Race like')
 clock = pygame.time.Clock() # Defining the clock
 
 carImg = pygame.image.load('race_car.png')
+
+
 
 def generateRGB():
     r = random.randrange(0, 217)
@@ -33,16 +35,16 @@ def create_text(text):
     return (textSurface, textRect)
     
 
-def crash():
-    textSurface, textRect = create_text('You crashed')
-    gameDisplay.blit(textSurface, textRect)
+def showMessage(message):
+    textSurface, textRect = create_text(message)
+    screen.blit(textSurface, textRect)
     pygame.display.update()
     time.sleep(2)
 
 def showScore(score):
     font = pygame.font.SysFont(None, 50)
     surface = font.render("score: " + str(score), True, black)
-    gameDisplay.blit(surface, (0, 0))
+    screen.blit(surface, (0, 0))
 
 class Object:
     def __init__(self, x, y, fallSpeed, width, height, color):
@@ -56,8 +58,9 @@ class Object:
     def draw(self):
         self.y += self.fallSpeed
         rect = (self.x, self.y, self.width, self.height)
-        pygame.draw.rect(gameDisplay, self.color, rect)
+        pygame.draw.rect(screen, self.color, rect)
 
+genInterval = 1000
 
 while True:
     # Car
@@ -67,23 +70,34 @@ while True:
     horizontal_speed = 5
     (car_width,car_height) = carImg.get_rect().size
 
-    # Object
-    initYPos = -300
-    rect1 = Object(
-        random.randrange(0, display_width),
-        initYPos,
-        7,
-        100,
-        100,
-        generateRGB()
-    )
     score = 0
+    objs = []
+    # object generation properties
+    objWidth = 100
+    fallSpeed = 7
+    
 
-    while True:
+    eventGenObj = pygame.USEREVENT + 1
+    pygame.time.set_timer(eventGenObj, int(genInterval))
+
+    gameExit = False
+    while not gameExit:
         for event in pygame.event.get(): # Event handler
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            if event.type == eventGenObj:
+                # DefObject
+                initYPos = -300
+                objIns = Object(
+                    random.randrange(0, display_width - objWidth),
+                    initYPos,
+                    fallSpeed,
+                    objWidth,
+                    100,
+                    generateRGB()
+                )
+                objs.append(objIns)
             keys_pressed = pygame.key.get_pressed()
             if keys_pressed[pygame.K_LEFT] and keys_pressed[pygame.K_RIGHT]:
                 x_vel = 0
@@ -96,37 +110,48 @@ while True:
 
         x += x_vel
 
-        # Clear the screen / The background
-        gameDisplay.fill(white)
+        for obj in objs:
+            # Car and Object collision
+            objectBottom = obj.y + obj.height
+            if objectBottom > y:
+                # I don't understand what I wrote but it works XD
+                if obj.x < (x + car_width) and (obj.x + obj.width) > x:
+                    gameExit = True
+                    showMessage("You crashed")
+                    break
+            # Object out of screen Logic
+            if obj.y > display_height:
+                objs.remove(obj)
+                # Score and challenge
+                if score >= 15:
+                    genInterval *= 0.72
+                    gameExit = True
+                    showMessage("NEXT LEVEL")
+                    break
+                score += 1
+                fallSpeed += 0.1
+                objWidth += 1
 
-        gameDisplay.blit(carImg, (x, y))
-        rect1.draw()
+        # Clear the screen / The background
+        screen.fill(white)
+
+        screen.blit(carImg, (x, y))
+
+        for obj in objs:
+            obj.draw()
+
+        """Score should be the last to draw
+        so that nothing ovelaps on top of it"""
         showScore(score)
-        # Object out of screen Logic
-        if rect1.y > display_height:
-            rect1.y = initYPos
-            rect1.x = random.randrange(0, display_width)
-            # Score logic and challenge
-            score += 1
-            rect1.fallSpeed += 1
-            horizontal_speed += 1
-            rect1.width += 5
-            rect1.color = generateRGB()
 
         # Bundries logic
         if x < 0 or x > display_width - car_width:
-            crash()
+            showMessage("You crashed")
             break
 
-        # Car and Object collision
-        objectBottom = rect1.y + rect1.height
-        if objectBottom > y:
-            # I don't understand what I wrote but it works XD
-            if rect1.x < (x + car_width) and (rect1.x + rect1.width) > x:
-                crash()
-                break
+        
 
         pygame.display.update()
         clock.tick(60)
 
-# TODO multiple blocks
+# TODO Fix sleep issue
