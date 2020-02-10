@@ -38,8 +38,6 @@ def create_text(text):
 def showMessage(message):
     textSurface, textRect = create_text(message)
     screen.blit(textSurface, textRect)
-    pygame.display.update()
-    time.sleep(2)
 
 def showScore(score):
     font = pygame.font.SysFont(None, 50)
@@ -79,6 +77,9 @@ while True:
 
     eventGenObj = pygame.USEREVENT + 1
     pygame.time.set_timer(eventGenObj, int(genInterval))
+    switchGenObj = True
+    numObjGen = 0 # Keep count of objects generated
+    level = 1
 
     gameExit = False
     while not gameExit:
@@ -86,7 +87,7 @@ while True:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == eventGenObj:
+            if event.type == eventGenObj and switchGenObj:
                 # DefObject
                 initYPos = -300
                 objIns = Object(
@@ -98,6 +99,9 @@ while True:
                     generateRGB()
                 )
                 objs.append(objIns)
+                numObjGen += 1
+                if numObjGen % 10 == 0:
+                    switchGenObj = False
             keys_pressed = pygame.key.get_pressed()
             if keys_pressed[pygame.K_LEFT] and keys_pressed[pygame.K_RIGHT]:
                 x_vel = 0
@@ -121,20 +125,25 @@ while True:
                     break
             # Object out of screen Logic
             if obj.y > display_height:
+                score += 1
                 objs.remove(obj)
                 # Score and challenge
-                if score >= 15:
-                    genInterval *= 0.72
-                    gameExit = True
-                    showMessage("NEXT LEVEL")
-                    break
-                score += 1
+                if score != 0 and score % 10 == 0:
+                    level += 1
+                    
+                    # genInterval *= 0.72
+                    # gameExit = True
+                    # showMessage("NEXT LEVEL")
+                    # break
+                    # switchGenObj = False
+                    
+                
                 fallSpeed += 0.1
                 objWidth += 1
 
         # Clear the screen / The background
         screen.fill(white)
-
+        
         screen.blit(carImg, (x, y))
 
         for obj in objs:
@@ -143,6 +152,11 @@ while True:
         """Score should be the last to draw
         so that nothing ovelaps on top of it"""
         showScore(score)
+
+        # Message
+        # if True:
+        #     textSurface, textRect = create_text("message")
+        #     screen.blit(textSurface, textRect)
 
         # Bundries logic
         if x < 0 or x > display_width - car_width:
@@ -155,3 +169,5 @@ while True:
         clock.tick(60)
 
 # TODO Fix sleep issue
+# car side collision
+# Don't reset levels
